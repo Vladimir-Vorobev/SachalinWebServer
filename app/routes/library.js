@@ -2,9 +2,6 @@ const crypto = require('crypto');
 const {JsonDB} = require('node-json-db');
 const {Config} = require('node-json-db/dist/lib/JsonDBConfig');
 
-var parseJSONdb = new JsonDB(new Config("parseData", true, false, '/')); //БД отпаршенных сайтов
-var sessionidJSONdb = new JsonDB(new Config("SessionKeys", true, false, '/')); //БД ключей залогиненых пользователей
-
 
 module.exports.deleteRep = function(arr) { // Функция удаления дубликатов объектов
     var newArr = [];
