@@ -1,7 +1,41 @@
 const crypto = require('crypto');
 
-
 module.exports = function(app, client) {
+    app.post("/api/passUpdate", function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+        oldPass = req.body.oldpass;
+        newPass = req.body.newpass;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("users");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.findOne({email: email}, function(err,result){
+                    if (err) throw err;
+
+                    if (result.password == oldPass){
+                        collection.updateOne({email: email}, {$set: {password: newPass}}, function(err){
+                            if (err) throw err;
+
+                            res.send({data: "OK"})
+                        })
+                    }
+                    else{
+                        res.send({data: 'Incorect password'})
+                    }
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+    });
+
     app.post('/api/regUser',function(req,res){ //Получение данных с регистрации +
         email = req.body.email;
         sessionID = req.body.sessionid;
@@ -15,34 +49,76 @@ module.exports = function(app, client) {
             if (errI) throw errI
             
             if (sesData.sessionID == sessionID){
-                collection.findOne({email: req.body.email},function(err, result){
+                collection.findOne({email: req.body.user.email},function(err, result){
                     if (err) throw err;
 
                     if (result == null){
                         key = crypto.randomBytes(64).toString('hex');
-                        var collection = mdb.collection("sessionID");
-                        collection.insertOne({email: req.body.email, sessionID: key}, function(err){
+                        collectionI.insertOne({email: req.body.user.email, sessionID: key}, function(err){
                             if (err) throw err;
                         })
             
-                        var collection = mdb.collection("users");
                         collection.insertOne(req.body.user, function(err){ //Сохранение информации
                             if (err) throw (err);
                         });
             
-                        res.send('Reg succsesful');
+                        res.send({data:'Reg succsesful'});
                     }
                     else{
-                        res.send('Reg Fail');
+                        res.send({data:'Reg Fail'});
                     }
                 });
             }
             else{
-                res.send("310");
+                res.json("310");
             }
         });
     });
-    
+
+    app.post("/api/delUser",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+        dopEmail = req.body.dopemail;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("users");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.findOne({email: dopEmail},function(err, result){
+                    if (err) throw err;
+
+                    if (result != null){
+                        collection.deleteOne({email: dopEmail},function(err){
+                            if (err) throw err
+                            
+                            collectionI.deleteOne({email: dopEmail},function(err){
+                                if (err) throw err
+
+                                var collectionI = mdb.collection("tables");
+                                collectionI.deleteMany({email: dopEmail},function(err){
+                                    if (err) throw err
+        
+                                    res.send({data: "OK"})
+                                });
+                            });
+                        });
+                    }   
+                    else{
+                        res.send({data: "User undefined"})
+                    }
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+
+    });
+
     app.post('/api/login',function(req,res){ //Получение данных с логина и отправка обратно SessionID +    
         const mdb = client.db("userData");
         var collection = mdb.collection("users");
@@ -64,11 +140,11 @@ module.exports = function(app, client) {
                     });
                 }
                 else{
-                    res.send('Incorect password');
+                    res.send({data: 'Incorect password'});
                 }
             }
             else{
-                res.send("User undefined")
+                res.send({data: "User undefined"})
             }
         });
     });
@@ -90,11 +166,11 @@ module.exports = function(app, client) {
                 collection.findOne({email: email}, function(err, inform){
                     if (err) throw err;
         
-                    res.json(inform);
+                    res.send(inform);
                 });
             }
             else{
-                res.send("310");
+                res.send({data: "310"});
             }
         });  
     });
@@ -102,6 +178,9 @@ module.exports = function(app, client) {
     app.post("/api/getUserList",function(req,res){
         email = req.body.email;
         sessionID = req.body.sessionid;
+
+
+        console.log(req.body)
 
         const mdb = client.db("userData");
         var collection = mdb.collection("users");
@@ -117,7 +196,7 @@ module.exports = function(app, client) {
                     resList = []
 
                     for (i in list){
-                        if (list[i].role != admin){
+                        if (list[i].role != "admin"){
                             resList.push({email: list[i].email,role: list[i].role})
                         }
                     }
@@ -126,7 +205,135 @@ module.exports = function(app, client) {
                 });
             }
             else{
-                res.send("310");
+                res.send({data: "310"});
+            }
+        });
+    });
+
+    app.post("/api/saveData",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+        data = req.body.data;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("tables");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                tableId = crypto.randomBytes(64).toString('hex');
+                collection.insertOne({data: data, tableid: tableId, email: email}, function(err){
+                    if (err) throw err;
+    
+                    res.send({data: tableId})
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+    });
+
+    app.post("/api/deleteData",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+        tableId = req.body.tableid;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("tables");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.deleteOne({email: email, tableid: tableId}, function(err){
+                    if (err) throw err;
+
+                    res.send({data: "OK"})
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+    });
+
+    app.post("/api/updateData",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+        tableId = req.body.tableid;
+        data = req.body.data;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("tables");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.updateOne({email: email, tableid: tableId},{$set: {data: data}}, function(err){
+                    if (err) throw err;
+
+                    res.send({data: "OK"})
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+    });
+
+    app.post("/api/getData",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+        tableId = req.body.tableid;
+
+        console.log(req.body)
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("tables");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.findOne({email: email, tableid: tableId}, function(err,result){
+                    if (err) throw err;
+
+                    res.json({data: result})
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+    });
+
+    app.post("/api/getDataList",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("tables");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.find({email: email}).toArray(function(err,arr){
+                    if (err) throw err;
+        
+                    res.send({data: arr})
+                });
+            }
+            else{
+                res.send({data: "310"});
             }
         });
     });
