@@ -62,7 +62,7 @@ module.exports = function(app, client) {
                             if (err) throw (err);
                         });
             
-                        res.send({data:'Reg succsesful'});
+                        res.send({data:'Reg successful'});
                     }
                     else{
                         res.send({data:'Reg Fail'});
