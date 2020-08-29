@@ -122,8 +122,6 @@ module.exports = function(app, client) {
     app.post('/api/login',function(req,res){ //Получение данных с логина и отправка обратно SessionID +    
         const mdb = client.db("userData");
         var collection = mdb.collection("users");
-
-        console.log(req.body)
         
         collection.findOne({email: req.body.email}, function(err, data){
             if (err) throw err;
@@ -153,8 +151,6 @@ module.exports = function(app, client) {
         email = req.body.email;
         sessionID = req.body.sessionid;
 
-        console.log(req.body)
-
         const mdb = client.db("userData");
         var collection = mdb.collection("users");
         var collectionI = mdb.collection("sessionID");
@@ -178,9 +174,6 @@ module.exports = function(app, client) {
     app.post("/api/getUserList",function(req,res){
         email = req.body.email;
         sessionID = req.body.sessionid;
-
-
-        console.log(req.body)
 
         const mdb = client.db("userData");
         var collection = mdb.collection("users");
@@ -291,8 +284,6 @@ module.exports = function(app, client) {
         email = req.body.email;
         sessionID = req.body.sessionid;
         tableId = req.body.tableid;
-
-        console.log(req.body)
 
         const mdb = client.db("userData");
         var collection = mdb.collection("tables");
