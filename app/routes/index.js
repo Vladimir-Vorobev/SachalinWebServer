@@ -21,7 +21,7 @@ const multer  = require("multer");
 const port = 3000; //Основной порт сервера
 
 
-MongoClient.connect('mongodb://127.0.0.1:27017/' , (err, client) => { //Подключение к базе данных и загрузка ручек для обращения к ней
+MongoClient.connect('mongodb+srv://makual:qwertyuiop@cluster0.7b2em.mongodb.net/userData?retryWrites=true&w=majority&ssl=true' , (err, client) => { //Подключение к базе данных и загрузка ручек для обращения к ней
     if (err) throw err;
     console.log("База данных успешно подключена");
     require('../routes/databaseRoutes')(app, client); //Подключение всех ручек из databaseRoutes.js
@@ -38,7 +38,7 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(expressMongoDb('mongodb://127.0.0.1:27017/'));
+// app.use(expressMongoDb('mongodb+srv://makual:8eGs8my&$zj@cluster0.7b2em.mongodb.net/userData?retryWrites=true&w=majority'));
 
 
 app.listen(port, "0.0.0.0", () => {
