@@ -134,7 +134,12 @@ module.exports = function(app, client) {
                         if (errI) throw errI;
                         
                         key = result.sessionID;
-                        res.send({sessionid: key, userid: data.userId}); //Отправить ключ клиенту
+                        
+                        collection.findOne({email: req.body.email} , fuction(err, userData){
+                            if (err) throw err;              
+                                 
+                            res.send({sessionid: key, userid: data.userId, data: userData}); //Отправить ключ клиенту
+                        });
                     });
                 }
                 else{
@@ -318,6 +323,32 @@ module.exports = function(app, client) {
             
             if (sesData.sessionID == sessionID){
                 collection.find({email: email}).toArray(function(err,arr){
+                    if (err) throw err;
+        
+                    res.send({data: arr})
+                });
+            }
+            else{
+                res.send({data: "310"});
+            }
+        });
+    });
+    
+    
+    
+    app.post("/api/getAllData",function(req,res){
+        email = req.body.email;
+        sessionID = req.body.sessionid;
+
+        const mdb = client.db("userData");
+        var collection = mdb.collection("tables");
+        var collectionI = mdb.collection("sessionID");
+
+        collectionI.findOne({email: email}, function(errI, sesData){
+            if (errI) throw errI
+            
+            if (sesData.sessionID == sessionID){
+                collection.find().toArray(function(err,arr){
                     if (err) throw err;
         
                     res.send({data: arr})
