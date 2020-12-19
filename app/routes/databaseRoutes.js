@@ -135,10 +135,10 @@ module.exports = function(app, client) {
                         
                         key = result.sessionID;
                         
-                        collection.findOne({email: req.body.email} , fuction(err, userData){
+                        collection.findOne({email: req.body.email} , function(err, userData){
                             if (err) throw err;              
                                  
-                            res.send({sessionid: key, userid: data.userId, data: userData}); //Отправить ключ клиенту
+                            res.send({sessionid: key, userid: data.userId, role: userData.role}); //Отправить ключ клиенту
                         });
                     });
                 }
@@ -212,6 +212,7 @@ module.exports = function(app, client) {
         email = req.body.email;
         sessionID = req.body.sessionid;
         data = req.body.data;
+        role = req.body.role;
 
         const mdb = client.db("userData");
         var collection = mdb.collection("tables");
@@ -222,7 +223,7 @@ module.exports = function(app, client) {
             
             if (sesData.sessionID == sessionID){
                 tableId = crypto.randomBytes(64).toString('hex');
-                collection.insertOne({data: data, tableid: tableId, email: email}, function(err){
+                collection.insertOne({data: data, tableid: tableId, email: email, role: role}, function(err){
                     if (err) throw err;
     
                     res.send({data: tableId})
@@ -247,7 +248,7 @@ module.exports = function(app, client) {
             if (errI) throw errI
             
             if (sesData.sessionID == sessionID){
-                collection.deleteOne({email: email, tableid: tableId}, function(err){
+                collection.deleteOne({tableid: tableId}, function(err){
                     if (err) throw err;
 
                     res.send({data: "OK"})
@@ -273,7 +274,7 @@ module.exports = function(app, client) {
             if (errI) throw errI
             
             if (sesData.sessionID == sessionID){
-                collection.updateOne({email: email, tableid: tableId},{$set: {data: data}}, function(err){
+                collection.updateOne({tableid: tableId},{$set: {data: data}}, function(err){
                     if (err) throw err;
 
                     res.send({data: "OK"})
@@ -298,7 +299,7 @@ module.exports = function(app, client) {
             if (errI) throw errI
             
             if (sesData.sessionID == sessionID){
-                collection.findOne({email: email, tableid: tableId}, function(err,result){
+                collection.findOne({tableid: tableId}, function(err,result){
                     if (err) throw err;
 
                     res.json({data: result})
@@ -334,8 +335,6 @@ module.exports = function(app, client) {
         });
     });
     
-    
-    
     app.post("/api/getAllData",function(req,res){
         email = req.body.email;
         sessionID = req.body.sessionid;
@@ -343,6 +342,7 @@ module.exports = function(app, client) {
         const mdb = client.db("userData");
         var collection = mdb.collection("tables");
         var collectionI = mdb.collection("sessionID");
+        var collectionU = mdb.collection("users");
 
         collectionI.findOne({email: email}, function(errI, sesData){
             if (errI) throw errI
@@ -350,8 +350,8 @@ module.exports = function(app, client) {
             if (sesData.sessionID == sessionID){
                 collection.find().toArray(function(err,arr){
                     if (err) throw err;
-        
-                    res.send({data: arr})
+                     
+                    res.send({data: arr});
                 });
             }
             else{
